@@ -1,0 +1,138 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="threejs-imports.html">
+
+<dom-module id="transit-metaballs">
+	<template>
+		<style>
+			:host,
+			#renderer{
+				@apply(--layout-fit);
+				overflow: hidden;
+			}
+			#renderer canvas{
+				transform-origin: 0 0 0;
+				-webkit-transform-origin : 0 0 0;
+			}
+
+		</style>
+
+		<iron-ajax
+			auto
+			url="[[resolveUrl('frag.source.glsl')]]"
+			handle-as="text"
+			last-response="{{_fragmentShaderSource}}">
+		</iron-ajax>
+
+		<div id="renderer"></div>
+
+	</template>
+</dom-module>
+
+<script>
+	Polymer({
+		is: 'transit-metaballs',
+		properties: {
+			numBalls:{
+				type: Number,
+				value: 20
+			},
+			maxNumPixels:{
+				type: Number,
+				value: 1000 * 1000
+
+			},
+			_fragmentShaderSource:{
+				type: String
+			}
+		},
+		observers:[
+			'_setupRederer(_fragmentShaderSource, numBalls)'
+		],
+		ready: function () {
+			window.META = this;
+		},
+		_setupRederer: function () {
+			if(typeof this._fragmentShaderSource === 'undefined'){
+				return;
+			}
+			if(typeof this.numBalls === 'undefined'){
+				return;
+			}
+			this._renderer = new THREE.WebGLRenderer({
+				preserveDrawingBuffer: true,
+				precision: 'lowp'
+			});
+			renderer.autoClear = false;
+
+			while(Polymer.dom(this.$.renderer).lastChild){
+				Polymer.dom(this.$.renderer).removeChild(Polymer.dom(this.$.renderer).lastChild);
+			}
+			Polymer.dom(this.$.renderer).appendChild(this._renderer.domElement);
+
+			var metaballs = [];
+			for (var i = 0; i < this.numBalls; i++) {
+				metaballs[i] = new THREE.Vector4(-0.5,-0.5,0,0.005);
+			}
+			this._uniforms = {
+				time : { type: "f", value: 0 },
+				resolution : { type: "v2", value: new THREE.Vector2( 0.5, 0.5) },
+				objectColor : { type: "v3", value: new THREE.Vector3( 0.3, 0.8, 1.0 ) },
+				backgroundColor : { type: "v3", value: new THREE.Vector3( 0.98, 0.98, 0.98 ) },
+				baseLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				spotLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				deformationFrequency  : { type: "f", value: 10.0 },
+				deformationAmount : { type: "f", value: 0.6 },
+				metaballs : { type : "v4v", value: metaballs },
+				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -2.7) },
+				texture: { type: "t", value: new THREE.Texture( ) },
+				cubemap: { type: "t", value: new THREE.Texture( ) }
+
+			}
+
+			this._composer = new THREE.EffectComposer( this._renderer );
+			this._shader = new THREE.ShaderPass( {
+				vertexShader : 'void main(){gl_Position = vec4( position, 1.0 );}',
+				fragmentShader : this._fragmentShaderSource,
+				uniforms: this._uniforms
+			});
+			this._shader.renderToScreen = true;
+			this._composer.addPass( this._shader );
+
+			this._lastAnimationFrameTime = Date.now();
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+
+			window.addEventListener('resize', this._onResize.bind(this), false);
+			this._onResize();
+		},
+
+		_render: function(dt) {
+			this._composer.render();
+		},
+		_onResize:function(){
+			this.debounce('_onResize', function(){
+				var screenSize = this.getBoundingClientRect();
+				var resolution = Math.sqrt( this.maxNumPixels / (screenSize.width * screenSize.height) );
+				var canvasSize = {
+					width: (screenSize.width * resolution ),
+					height: (screenSize.height * resolution )
+				}
+
+				this._renderer.setSize(canvasSize.width, canvasSize.height);
+				var scale = (1.0 / resolution) ;
+				console.log(scale)
+				this.transform('scale3d('+scale+', '+scale+', 1.0)', this._renderer.domElement);
+
+				this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
+			}, 100);
+		},
+		_animationFrame: function () {
+			var dt = Date.now() - this._lastAnimationFrameTime;
+			this._lastAnimationFrameTime = Date.now();
+			this._render(dt);
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+		},
+	});
+</script>
