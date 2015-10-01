@@ -1,0 +1,27 @@
+{
+  "name": "transit-generator",
+  "version": "0.0.0",
+  "authors": [
+    "Paulo Barcelos <paulo@azucrina.org>"
+  ],
+  "description": "An element providing a solution to no problem in particular.",
+  "keywords": [
+  ],
+  "main": "transit-generator.html",
+  "homepage": "https://github.com/paulobarcelos/transit-generator/",
+  "ignore": [
+    "/.*",
+    "/test/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.1.0",
+    "iron-elements": "PolymerElements/iron-elements#^1.0.0",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.1",
+    "neon-elements": "PolymerElements/neon-elements#^1.0.0",
+    "threejs": "*"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "*"
+  }
+}
