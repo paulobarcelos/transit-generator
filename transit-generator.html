@@ -3,7 +3,7 @@
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="threejs-imports.html">
 
-<dom-module id="transit-metaballs">
+<dom-module id="transit-generator">
 	<template>
 		<style>
 			:host,
@@ -32,7 +32,7 @@
 
 <script>
 	Polymer({
-		is: 'transit-metaballs',
+		is: 'transit-generator',
 		properties: {
 			numBalls:{
 				type: Number,
@@ -71,9 +71,9 @@
 			}
 			Polymer.dom(this.$.renderer).appendChild(this._renderer.domElement);
 
-			var metaballs = [];
+			var generator = [];
 			for (var i = 0; i < this.numBalls; i++) {
-				metaballs[i] = new THREE.Vector4(-0.5,-0.5,0,0.005);
+				generator[i] = new THREE.Vector4(-0.5,-0.5,0,0.005);
 			}
 			this._uniforms = {
 				time : { type: "f", value: 0 },
@@ -85,7 +85,7 @@
 				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				deformationFrequency  : { type: "f", value: 10.0 },
 				deformationAmount : { type: "f", value: 0.6 },
-				metaballs : { type : "v4v", value: metaballs },
+				generator : { type : "v4v", value: generator },
 				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -2.7) },
 				texture: { type: "t", value: new THREE.Texture( ) },
 				cubemap: { type: "t", value: new THREE.Texture( ) }

@@ -30,7 +30,7 @@ uniform vec3 spot2LightColor;
 uniform float deformationFrequency;
 uniform float deformationAmount;
 uniform vec3 camera;
-uniform vec4 metaballs [NUM_OBJECTS];
+uniform vec4 generator [NUM_OBJECTS];
 
 
 struct Ray{
@@ -59,10 +59,10 @@ float distanceFunction ( vec3 point ){
 	float distance = 0.0;
 
 	for ( int i = 0; i < NUM_OBJECTS; ++i )	{
-		vec3 delta = point - metaballs [i].xyz;
+		vec3 delta = point - generator [i].xyz;
 
 		float f = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
-		distance += metaballs [i].w / f;
+		distance += generator [i].w / f;
 	}
 
 	distance =  THRESHOLD - distance;

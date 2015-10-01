@@ -1,5 +1,5 @@
 {
-  "name": "transit-metaballs",
+  "name": "transit-generator",
   "version": "0.0.0",
   "authors": [
     "Paulo Barcelos <paulo@azucrina.org>"
@@ -7,8 +7,8 @@
   "description": "An element providing a solution to no problem in particular.",
   "keywords": [
   ],
-  "main": "transit-metaballs.html",
-  "homepage": "https://github.com/paulobarcelos/transit-metaballs/",
+  "main": "transit-generator.html",
+  "homepage": "https://github.com/paulobarcelos/transit-generator/",
   "ignore": [
     "/.*",
     "/test/"

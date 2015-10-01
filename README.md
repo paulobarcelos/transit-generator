@@ -1,6 +1,6 @@
-# transit-metaballs
+# transit-generator
 
-An element providing a starting point for your own reusable Polymer elements.
+A web-component element that renders the simulation used to generate branding graphics for Transit.
 
 
 ## Dependencies
@@ -28,13 +28,13 @@ And you can run it via:
     polyserve
 
 Once running, you can preview your element at
-`http://localhost:8080/components/transit-metaballs/`, where `transit-metaballs` is the name of the directory containing it.
+`http://localhost:8080/components/transit-generator/`, where `transit-generator` is the name of the directory containing it.
 
 
 ## Testing Your Element
 
 Simply navigate to the `/test` directory of your element to run its tests. If
-you are using Polyserve: `http://localhost:8080/components/transit-metaballs/test/`
+you are using Polyserve: `http://localhost:8080/components/transit-generator/test/`
 
 ### web-component-tester
 
