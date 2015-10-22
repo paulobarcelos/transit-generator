@@ -6,7 +6,10 @@
 <dom-module id="transit-generator">
 	<template>
 		<style>
-			:host,
+			:host{
+				display: block;
+				position: relative;
+			}
 			#renderer{
 				@apply(--layout-fit);
 				overflow: hidden;
@@ -38,14 +41,63 @@
 				type: Number,
 				value: 20
 			},
-			maxNumPixels:{
+			maxResolution:{
 				type: Number,
-				value: 1000 * 1000
-
+				value: 0.1,
+				notify: true,
+				observer: '_onResize'
 			},
-			_fragmentShaderSource:{
+			deformationFrequency:{
+				type: Number,
+				value: 40,
+				notify: true
+			},
+			deformationAmount:{
+				type: Number,
+				value: 0.6,
+				notify: true
+			},
+			blobSize:{
+				type: Number,
+				value: 0.02,
+				notify: true
+			},
+			timeMultiplier:{
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			halftoneGridSize : {
+				type: Number,
+				notify: true,
+				value: 20
+			},
+			halftoneSeparation : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftonePrePower : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftonePostPower : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftoneMultiplier : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			_fragmentShaderSource: {
 				type: String
 			}
+		},
+		listeners:{
+			'click' : 'screenshot'
 		},
 		observers:[
 			'_setupRederer(_fragmentShaderSource, numBalls)'
@@ -61,7 +113,6 @@
 				return;
 			}
 			this._renderer = new THREE.WebGLRenderer({
-				preserveDrawingBuffer: true,
 				precision: 'lowp'
 			});
 			renderer.autoClear = false;
@@ -71,22 +122,27 @@
 			}
 			Polymer.dom(this.$.renderer).appendChild(this._renderer.domElement);
 
-			var generator = [];
+			var objects = [];
 			for (var i = 0; i < this.numBalls; i++) {
-				generator[i] = new THREE.Vector4(-0.5,-0.5,0,0.005);
+				objects[i] = new THREE.Vector4(0,0,0, this.blobSize);
 			}
 			this._uniforms = {
 				time : { type: "f", value: 0 },
 				resolution : { type: "v2", value: new THREE.Vector2( 0.5, 0.5) },
-				objectColor : { type: "v3", value: new THREE.Vector3( 0.3, 0.8, 1.0 ) },
-				backgroundColor : { type: "v3", value: new THREE.Vector3( 0.98, 0.98, 0.98 ) },
+				objectColor : { type: "v3", value: new THREE.Vector3( 0, 0, 0 ) },
+				backgroundColor : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) },
 				baseLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				spotLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
-				deformationFrequency  : { type: "f", value: 10.0 },
-				deformationAmount : { type: "f", value: 0.6 },
-				generator : { type : "v4v", value: generator },
-				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -2.7) },
+				deformationFrequency  : { type: "f", value: this.deformationFrequency },
+				deformationAmount : { type: "f", value: this.deformationAmount },
+				objects : { type : "v4v", value: objects },
+				halftoneGridSize : { type: "f", value: this.halftoneGridSize },
+				halftoneSeparation : { type: "f", value: this.halftoneSeparation },
+				halftonePrePower : { type: "f", value: this.halftonePrePower },
+				halftonePostPower : { type: "f", value: this.halftonePostPower },
+				halftoneMultiplier : { type: "f", value: this.halftoneMultiplier },
+				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -1) },
 				texture: { type: "t", value: new THREE.Texture( ) },
 				cubemap: { type: "t", value: new THREE.Texture( ) }
 
@@ -101,6 +157,19 @@
 			this._shader.renderToScreen = true;
 			this._composer.addPass( this._shader );
 
+			/*this._filterShader = new THREE.ShaderPass( THREE.CopyShader );
+			this._filterShader.renderToScreen = true;
+			this._composer.addPass( this._filterShader );*/
+
+			/*this._dotScreenShader = new THREE.ShaderPass( THREE.DotScreenShader );
+			this._dotScreenShader .uniforms[ 'scale' ].value = 4;
+			this._composer.addPass( this._dotScreenShader  );
+
+			this._rGBShiftShader  = new THREE.ShaderPass( THREE.RGBShiftShader );
+			this._rGBShiftShader .uniforms[ 'amount' ].value = 0.0015;
+			this._rGBShiftShader .renderToScreen = true;
+			this._composer.addPass( this._rGBShiftShader  );*/
+
 			this._lastAnimationFrameTime = Date.now();
 			window.requestAnimationFrame(this._animationFrame.bind(this));
 
@@ -108,13 +177,55 @@
 			this._onResize();
 		},
 
+		_fluidPosition: function(value, i, array){
+			var now = this._now();
+			var index = i/array.length;
+			var result = {};
+			result.x = Math.sin(now*0.4 + index * 10);
+			result.y = Math.cos(now + index * now*0.3) * 0.3;
+			result.z = (Math.sin(now*0.7 + index * now*0.1) * 0.5 - 1.0) * 0.001;
+			//result.z = result.z * 0.2 -1;
+
+			return result;
+		},
+		_rigigPosition: function(value, i, array){
+			return Math.sin(Date.now() * 0.001) - 1;
+		},
+		_constrainPositionsToUv: function(value, i, array){
+			var result = {};
+			result.x = (value.x * 0.5 - 0.5);
+			result.y = (value.y * 0.5 - 0.5);
+			result.z = value.z;
+			return result;
+		},
 		_render: function(dt) {
+
+			var objects = this._shader.uniforms.objects.value;
+			var fluidPositions = objects.map(this._fluidPosition.bind(this));
+			var finalPositions = fluidPositions.map(this._constrainPositionsToUv.bind(this));
+
+			//var rigidPositions = objects.map(this._rigidPositions.bind(this));
+			objects.forEach(function(value, i){
+				value.x = fluidPositions[i].x;
+				value.y = fluidPositions[i].y;
+				value.z = fluidPositions[i].z;
+				value.w = this.blobSize;
+			}.bind(this));
+
+			this._shader.uniforms.deformationFrequency.value = this.deformationFrequency;
+			this._shader.uniforms.deformationAmount.value = this.deformationAmount;
+			this._shader.uniforms.halftoneGridSize.value = this.halftoneGridSize;
+			this._shader.uniforms.halftoneSeparation.value = this.halftoneSeparation;
+			this._shader.uniforms.halftonePrePower.value = this.halftonePrePower;
+			this._shader.uniforms.halftonePostPower.value = this.halftonePostPower;
+			this._shader.uniforms.halftoneMultiplier.value = this.halftoneMultiplier;
+
 			this._composer.render();
 		},
 		_onResize:function(){
 			this.debounce('_onResize', function(){
 				var screenSize = this.getBoundingClientRect();
-				var resolution = Math.sqrt( this.maxNumPixels / (screenSize.width * screenSize.height) );
+				var resolution = Math.sqrt( (this.maxResolution * 1000000) / (screenSize.width * screenSize.height) );
 				var canvasSize = {
 					width: (screenSize.width * resolution ),
 					height: (screenSize.height * resolution )
@@ -122,10 +233,12 @@
 
 				this._renderer.setSize(canvasSize.width, canvasSize.height);
 				var scale = (1.0 / resolution) ;
-				console.log(scale)
 				this.transform('scale3d('+scale+', '+scale+', 1.0)', this._renderer.domElement);
 
-				this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
+				//this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
+				this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width, canvasSize.height) ;
+				console.log(canvasSize.width)
+
 			}, 100);
 		},
 		_animationFrame: function () {
@@ -134,5 +247,15 @@
 			this._render(dt);
 			window.requestAnimationFrame(this._animationFrame.bind(this));
 		},
+		_now: function(){
+			return Date.now() * 0.001 * this.timeMultiplier;
+		},
+		_constrainZ: function(z){
+			return z * 0.005 + 0.001;
+		},
+		takeScreenshot: function(){
+			this._composer.render();
+			return this._renderer.domElement.toDataURL();
+		}
 	});
 </script>

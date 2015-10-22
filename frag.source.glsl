@@ -1,11 +1,11 @@
 #define NUM_OBJECTS 20
 #define THRESHOLD 2.0
-#define NORMAL_EPSILON 0.01
+#define NORMAL_EPSILON 0.001
 #define INTERVALS 15
 #define LIGHT_DIRECTION_1 vec3(0.0,2.0,0.0)
 #define LIGHT_DIRECTION_2 vec3(-2.0,0.5,0.0)
-#define REFLECTION_EPSILON 0.1
-#define REFRACTION_EPSILON 0.1
+#define REFLECTION_EPSILON 0.01
+#define REFRACTION_EPSILON 0.01
 #define REFRACTION_RATIO 0.98
 #define REFLECTION_DEPTH 0
 #define REFLECTION_AMOUNT 0.5
@@ -29,8 +29,13 @@ uniform vec3 spotLightColor;
 uniform vec3 spot2LightColor;
 uniform float deformationFrequency;
 uniform float deformationAmount;
+uniform float halftoneGridSize;
+uniform float halftoneSeparation;
+uniform float halftonePrePower;
+uniform float halftonePostPower;
+uniform float halftoneMultiplier;
 uniform vec3 camera;
-uniform vec4 generator [NUM_OBJECTS];
+uniform vec4 objects [NUM_OBJECTS];
 
 
 struct Ray{
@@ -59,10 +64,10 @@ float distanceFunction ( vec3 point ){
 	float distance = 0.0;
 
 	for ( int i = 0; i < NUM_OBJECTS; ++i )	{
-		vec3 delta = point - generator [i].xyz;
+		vec3 delta = point - objects [i].xyz;
 
 		float f = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
-		distance += generator [i].w / f;
+		distance += objects [i].w / f;
 	}
 
 	distance =  THRESHOLD - distance;
@@ -230,47 +235,60 @@ vec3 ObjectMaterial ( RaytraceInfo info ){
 	return color;
 }
 
+
+const float PI = 3.1415926535897932384626433832795;
+const float PI180 = float(PI / 180.0);
+
+float sind(float a){
+	return sin(a * PI180);
+}
+
+float cosd(float a){
+	return cos(a * PI180);
+}
+
+float added(vec2 sh, float sa, float ca, vec2 c, float d){
+	return 0.5 + 0.25 * cos((sh.x * sa + sh.y * ca + c.x) * d) + 0.25 * cos((sh.x * ca - sh.y * sa + c.y) * d);
+}
+
+
 void main ( void ){
-
-	vec2 aspectFix = vec2(1.0, 1.0);
-	vec2 uv = (gl_FragCoord.xy / resolution.xy ) - 0.5;
-
-
-	uv = (uv *aspectFix);// - (uv * vec2(4.0,0.0) * 0.5); // compensate for wrong screnn aspect
-
+	// Calculate UV
+	vec2 uv = ((gl_FragCoord.xy  / resolution.xy ) * 2.0) - 1.0  ;
 	uv.x *= resolution.x / resolution.y;
-	float uvLength  = length(uv);
 
-	vec3 direction = vec3(uv,1.0);
+	// Pixelate
+	vec2 pixelateR = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(-0.08, -0.05)*halftoneSeparation) / halftoneGridSize;
+	vec2 pixelateG = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(0.0, 0.08)*halftoneSeparation) / halftoneGridSize;
+	vec2 pixelateB = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(0.08, -0.05)*halftoneSeparation) / halftoneGridSize;
+	float halftonePatternR = length(uv - (pixelateR + 0.5/halftoneGridSize)) * halftoneGridSize;
+	float halftonePatternG = length(uv - (pixelateG + 0.5/halftoneGridSize)) * halftoneGridSize;
+	float halftonePatternB = length(uv - (pixelateB + 0.5/halftoneGridSize)) * halftoneGridSize;
+	vec3 halftonePattern = vec3(halftonePatternR, halftonePatternG, halftonePatternB);
+	uv = pixelateR;
 
+	// Raytrace
+	vec3 direction = vec3(uv, 1.0);
 	Ray ray = Ray ( camera, direction );
-
 	RaytraceInfo info = Raytrace ( ray );
 
-
+	// Get color (from ray trace)
 	vec3 color = backgroundColor;
 	if(info.intersected){
-		//float fog = clamp(max(info.point.z * 0.6, uvLength ), 0.0, 1.0);
-		//vec3 objectColor = ObjectMaterial(info);
-		//color = mix(objectColor, color, fog );
-
-		//vec3 outline = vec3( clamp ( pow( dot( info.normal, direction ) * 6.0, 0.3), 0.0, 1.0) );
-		//color = mix(color, ObjectMaterial(info), outline );
 		color = ObjectMaterial(info);
-		//vec3 outline = vec3( pow( 1.0 - dot( info.normal, direction ), 2.0) );
-		//color = outline;
-
 	}
 
+	// Apply halftone
+	vec3 halftoneColor = color;
+	halftoneColor *= halftonePattern;
+	halftoneColor = pow(halftoneColor, vec3(halftonePrePower));//1.2
+	halftoneColor *= vec3(halftoneMultiplier); //10
+	halftoneColor = clamp(halftoneColor, vec3(0.0), vec3(1.0));
+	halftoneColor = pow(halftoneColor, vec3(halftonePostPower));//3.0
 
-	// post processing
-	color = pow(color, vec3(4.5));
-	//color -= min( pow(uvLength, 5.0) * 0.45, 0.1); //vignette
-
-	
+	// Mask
+	color = mix( halftoneColor, vec3(1.0), step(1.0, color));
 
 
-
-
-	gl_FragColor =  vec4 (  color, 1.0 );
+	gl_FragColor =  vec4(color,1.0 );
 }

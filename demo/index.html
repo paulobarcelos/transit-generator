@@ -5,22 +5,188 @@
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
 		<title>transit-generator Demo</title>
 		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+		<link rel="stylesheets" href="../../paper-styles/paper-styles.html">
+		<link rel="stylesheets" href="../../paper-styles/demo-pages.html">
+		<link rel="import" href="../../iron-collapse/iron-collapse.html">
+		<link rel="import" href="../../paper-button/paper-button.html">
+		<link rel="import" href="../../paper-drawer-panel/paper-drawer-panel.html">
+		<link rel="import" href="../../paper-slider/paper-slider.html">
+		<link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
 		<link rel="import" href="../transit-generator.html">
 
 		<style>
+			body{
+				font-family: 'Roboto', 'Noto', sans-serif;
+			}
 			transit-generator{
-				position: fixed;
-				top:0;
-				left:0;
-				right:0;
-				bottom:0;
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+			}
+			[drawer]{
+				background-color: #eee;
+				padding: 1rem;
+			}
+			paper-button{
+				display: block;
+				background-color: black;
+				color: white;
+			}
+			paper-toggle-button{
+				margin-bottom: 10px;
+				display: block;
+			}
+			iron-collapse{
+				margin: 10px;
 			}
 		</style>
 	</head>
 
 	<body unresolved>
-		<transit-generator>
-		</transit-generator>
+		<template is="dom-bind" id="template">
+			<paper-drawer-panel>
+				<transit-generator
+					id="generator"
+					main
+					time-multiplier="{{timeMultiplier}}"
+					max-resolution="{{resolution}}"
+					deformation-frequency="{{deformationFrequency}}"
+					deformation-amount="{{deformationAmount}}"
+					blob-size="{{blobSize}}"
+					halftone-Grid-Size="{{halftoneGridSize}}"
+					halftone-separation="{{halftoneSeparation}}"
+					halftone-pre-power="{{halftonePrePower}}"
+					halftone-post-power="{{halftonePostPower}}"
+					halftone-multiplier="{{halftoneMultiplier}}">
+				</transit-generator>
+				<div drawer>
+					<paper-toggle-button
+						checked="{{uiGeneralOpen}}">
+						General
+					</paper-toggle-button>
+					<iron-collapse opened="[[uiGeneralOpen]]">
+						<div>Resolution (MP)</div>
+						<paper-slider
+							editable
+							min=0.1
+							max=10
+							step="0.05"
+							value="0.4"
+							immediate-value="{{resolution}}">
+						</paper-slider>
+						<div>Time Multiplier</div>
+						<paper-slider
+							editable
+							min=0
+							max=3
+							step="0.05"
+							value="1"
+							immediate-value="{{timeMultiplier}}">
+						</paper-slider>
+					</iron-collapse>
+
+					<paper-toggle-button
+						checked="{{uiFormOpen}}">
+						Form
+					</paper-toggle-button>
+					<iron-collapse opened="[[uiFormOpen]]">
+						<div>Deformation Frequency</div>
+						<paper-slider
+							editable
+							min=1
+							max=100
+							step="1"
+							value="40"
+							immediate-value="{{deformationFrequency}}">
+						</paper-slider>
+						<div>Deformation Amount</div>
+						<paper-slider
+							editable
+							min=0
+							max=2
+							step="0.05"
+							value="0.2"
+							immediate-value="{{deformationAmount}}">
+						</paper-slider>
+						<div>Blob Size</div>
+						<paper-slider
+							editable
+							min=0
+							max=0.1
+							step="0.0001"
+							value="0.05"
+							immediate-value="{{blobSize}}">
+						</paper-slider>
+					</iron-collapse>
+
+					<paper-toggle-button
+						checked="{{uiFilterOpen}}">
+						Filter
+					</paper-toggle-button>
+					<iron-collapse opened="[[uiFilterOpen]]">
+						<div>Halftone Grid</div>
+						<paper-slider
+							editable
+							min=1
+							max=100
+							step="1"
+							value="20"
+							immediate-value="{{halftoneGridSize}}">
+						</paper-slider>
+						<div>Halftone Separation</div>
+						<paper-slider
+							editable
+							min=0
+							max=3
+							step="0.0001"
+							value="1"
+							immediate-value="{{halftoneSeparation}}">
+						</paper-slider>
+						<div>Halftone Pre Power</div>
+						<paper-slider
+							editable
+							min=0
+							max=10
+							step="0.0001"
+							value="1.2"
+							immediate-value="{{halftonePrePower}}">
+						</paper-slider>
+						<div>Halftone Post Power</div>
+						<paper-slider
+							editable
+							min=0
+							max=10
+							step="0.0001"
+							value="3"
+							immediate-value="{{halftonePostPower}}">
+						</paper-slider>
+						<div>Halftone Multiplier</div>
+						<paper-slider
+							editable
+							min=0
+							max=20
+							step="0.0001"
+							value="8"
+							immediate-value="{{halftoneMultiplier}}">
+						</paper-slider>
+					</iron-collapse>
+
+					<paper-button
+						on-tap="_onScreenshotTap">Screenshot</paper-button>
+				</div>
+
+			</paper-drawer-panel>
+		</template>
+		<script>
+			var template = document.querySelector('#template');
+			template._onScreenshotTap = function(e) {
+				var dataURL = template.$.generator.takeScreenshot();
+				window.open(dataURL,'_blank');
+			};
+		</script>
 
 	</body>
 </html>
