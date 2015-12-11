@@ -29,6 +29,7 @@
 			[drawer]{
 				background-color: #eee;
 				padding: 1rem;
+				overflow-y: scroll;
 			}
 			paper-button{
 				display: block;
@@ -53,6 +54,8 @@
 					main
 					time-multiplier="{{timeMultiplier}}"
 					max-resolution="{{resolution}}"
+					zoom="{{zoom}}"
+					blob-stickiness="{{blobStickiness}}"
 					deformation-frequency="{{deformationFrequency}}"
 					deformation-amount="{{deformationAmount}}"
 					blob-size="{{blobSize}}"
@@ -60,7 +63,10 @@
 					halftone-separation="{{halftoneSeparation}}"
 					halftone-pre-power="{{halftonePrePower}}"
 					halftone-post-power="{{halftonePostPower}}"
-					halftone-multiplier="{{halftoneMultiplier}}">
+					halftone-multiplier="{{halftoneMultiplier}}"
+					movement-constrain="{{movementConstrain}}"
+					rigid-position-amount="{{rigidPositionAmount}}"
+					fluid-position-amount="{{fluidPositionAmount}}">
 				</transit-generator>
 				<div drawer>
 					<paper-toggle-button
@@ -74,18 +80,10 @@
 							min=0.1
 							max=10
 							step="0.05"
-							value="0.4"
+							value="1"
 							immediate-value="{{resolution}}">
 						</paper-slider>
-						<div>Time Multiplier</div>
-						<paper-slider
-							editable
-							min=0
-							max=3
-							step="0.05"
-							value="1"
-							immediate-value="{{timeMultiplier}}">
-						</paper-slider>
+
 					</iron-collapse>
 
 					<paper-toggle-button
@@ -93,6 +91,15 @@
 						Form
 					</paper-toggle-button>
 					<iron-collapse opened="[[uiFormOpen]]">
+						<div>Stickiness</div>
+						<paper-slider
+							editable
+							min=1
+							max=100
+							step="1"
+							value="20"
+							immediate-value="{{blobStickiness}}">
+						</paper-slider>
 						<div>Deformation Frequency</div>
 						<paper-slider
 							editable
@@ -115,10 +122,62 @@
 						<paper-slider
 							editable
 							min=0
-							max=0.1
+							max=1
 							step="0.0001"
-							value="0.05"
+							value="0.3"
 							immediate-value="{{blobSize}}">
+						</paper-slider>
+					</iron-collapse>
+
+					<paper-toggle-button
+						checked="{{uiMovementOpen}}">
+						Movement
+					</paper-toggle-button>
+					<iron-collapse opened="[[uiMovementOpen]]">
+						<div>Camera Zoom</div>
+						<paper-slider
+							editable
+							min=1
+							max=5
+							step="0.0001"
+							value="1.6"
+							immediate-value="{{zoom}}">
+						</paper-slider>
+						<div>Movement Constrain</div>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="1"
+							immediate-value="{{movementConstrain}}">
+						</paper-slider>
+						<div>Time Multiplier</div>
+						<paper-slider
+							editable
+							min=0
+							max=3
+							step="0.05"
+							value="0.8"
+							immediate-value="{{timeMultiplier}}">
+						</paper-slider>
+						<div>Fluid amount</div>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.005"
+							value="0.5"
+							immediate-value="{{fluidPositionAmount}}">
+						</paper-slider>
+						<div>Rigid amount</div>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.005"
+							value="0.5"
+							immediate-value="{{rigidPositionAmount}}">
 						</paper-slider>
 					</iron-collapse>
 
@@ -133,7 +192,7 @@
 							min=1
 							max=100
 							step="1"
-							value="20"
+							value="30"
 							immediate-value="{{halftoneGridSize}}">
 						</paper-slider>
 						<div>Halftone Separation</div>
@@ -142,7 +201,7 @@
 							min=0
 							max=3
 							step="0.0001"
-							value="1"
+							value="0"
 							immediate-value="{{halftoneSeparation}}">
 						</paper-slider>
 						<div>Halftone Pre Power</div>
@@ -151,7 +210,7 @@
 							min=0
 							max=10
 							step="0.0001"
-							value="1.2"
+							value="1.3583"
 							immediate-value="{{halftonePrePower}}">
 						</paper-slider>
 						<div>Halftone Post Power</div>
@@ -160,7 +219,7 @@
 							min=0
 							max=10
 							step="0.0001"
-							value="3"
+							value="5.0313"
 							immediate-value="{{halftonePostPower}}">
 						</paper-slider>
 						<div>Halftone Multiplier</div>
@@ -169,7 +228,7 @@
 							min=0
 							max=20
 							step="0.0001"
-							value="8"
+							value="15.7813"
 							immediate-value="{{halftoneMultiplier}}">
 						</paper-slider>
 					</iron-collapse>
