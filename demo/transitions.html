@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+		<title>transit-generator Demo</title>
+		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+		<link rel="stylesheets" href="../../paper-styles/paper-styles.html">
+		<link rel="stylesheets" href="../../paper-styles/demo-pages.html">
+		<link rel="import" href="../../iron-collapse/iron-collapse.html">
+		<link rel="import" href="../../paper-button/paper-button.html">
+		<link rel="import" href="../../paper-drawer-panel/paper-drawer-panel.html">
+		<link rel="import" href="../../paper-slider/paper-slider.html">
+		<link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
+		<link rel="import" href="../transit-generator.html">
+		<link rel="import" href="../transit-generator-states.html">
+
+		<style>
+			body{
+				font-family: 'Roboto', 'Noto', sans-serif;
+			}
+			transit-generator{
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+			}
+			[drawer]{
+				background-color: #eee;
+				padding: 1rem;
+			}
+			paper-button{
+				display: block;
+				background-color: black;
+				color: white;
+			}
+			paper-toggle-button{
+				margin-bottom: 10px;
+				display: block;
+			}
+			iron-collapse{
+				margin: 10px;
+			}
+		</style>
+	</head>
+
+	<body unresolved>
+		<template is="dom-bind" id="template">
+			<transit-generator-states
+				id="states"
+				lerp="{{lerp}}"
+				zoom="{{zoom}}"
+				blob-stickiness="{{blobStickiness}}"
+				time-multiplier="{{timeMultiplier}}"
+				deformation-frequency="{{deformationFrequency}}"
+				deformation-amount="{{deformationAmount}}"
+				blob-size="{{blobSize}}"
+				halftone-Grid-Size="{{halftoneGridSize}}"
+				halftone-separation="{{halftoneSeparation}}"
+				halftone-pre-power="{{halftonePrePower}}"
+				halftone-post-power="{{halftonePostPower}}"
+				halftone-multiplier="{{halftoneMultiplier}}"
+				movement-constrain="{{movementConstrain}}"
+				rigid-position-amount="{{rigidPositionAmount}}"
+				fluid-position-amount="{{fluidPositionAmount}}">
+			</transit-generator-states>
+			<paper-drawer-panel>
+
+				<transit-generator
+					id="generator"
+					main
+					zoom="[[zoom]]"
+					blob-stickiness="[[blobStickiness]]"
+					time-multiplier="[[timeMultiplier]]"
+					max-resolution="[[resolution]]"
+					deformation-frequency="[[deformationFrequency]]"
+					deformation-amount="[[deformationAmount]]"
+					blob-size="[[blobSize]]"
+					halftone-Grid-Size="[[halftoneGridSize]]"
+					halftone-separation="[[halftoneSeparation]]"
+					halftone-pre-power="[[halftonePrePower]]"
+					halftone-post-power="[[halftonePostPower]]"
+					halftone-multiplier="[[halftoneMultiplier]]"
+					movement-constrain="[[movementConstrain]]"
+					rigid-position-amount="[[rigidPositionAmount]]"
+					fluid-position-amount="[[fluidPositionAmount]]">
+				</transit-generator>
+				<div drawer>
+
+					<div>Resolution (MP)</div>
+					<paper-slider
+						editable
+						min=0.1
+						max=10
+						step="0.05"
+						value="1"
+						immediate-value="{{resolution}}">
+					</paper-slider>
+
+					<div>Transition Speed</div>
+					<paper-slider
+						editable
+						min=0
+						max=0.5
+						step="0.0001"
+						value="0.015"
+						immediate-value="{{lerp}}">
+					</paper-slider>
+
+					<paper-button
+						on-tap="_onZeroTap">Zero</paper-button>
+					<paper-button
+						on-tap="_onCondensedTap">Condensed</paper-button>
+					<paper-button
+						on-tap="_onSpreadTap">Spread</paper-button>
+					<paper-button
+						on-tap="_onVaporizeTap">Vaporize</paper-button>
+					<paper-button
+						on-tap="_onInteractTap">Interact</paper-button>
+					<paper-button
+						on-tap="_onOrganicTap">Organic</paper-button>
+					<paper-button
+						on-tap="_onContactTap">Contact</paper-button>
+					<paper-button
+						on-tap="_onNewsTap">News</paper-button>
+
+					<paper-button
+						on-tap="_onScreenshotTap">Screenshot</paper-button>
+				</div>
+
+			</paper-drawer-panel>
+		</template>
+		<script>
+			var template = document.querySelector('#template');
+			template._onZeroTap = function(e) {
+				template.$.states.state = 'zero';
+			};
+			template._onCondensedTap = function(e) {
+				template.$.states.state = 'condensed';
+			};
+			template._onSpreadTap = function(e) {
+				template.$.states.state = 'spread';
+			};
+			template._onVaporizeTap = function(e) {
+				template.$.states.state = 'vaporize';
+			};
+			template._onInteractTap = function(e) {
+				template.$.states.state = 'interact';
+			};
+			template._onOrganicTap = function(e) {
+				template.$.states.state = 'organic';
+			};
+			template._onContactTap = function(e) {
+				template.$.states.state = 'contact';
+			};
+			template._onNewsTap = function(e) {
+				template.$.states.state = 'news';
+			};
+
+			template._onScreenshotTap = function(e) {
+				var dataURL = template.$.generator.takeScreenshot();
+				window.open(dataURL,'_blank');
+			};
+		</script>
+
+	</body>
+</html>

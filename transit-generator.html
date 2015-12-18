@@ -39,13 +39,18 @@
 		properties: {
 			numBalls:{
 				type: Number,
-				value: 20
+				value: 16
 			},
 			maxResolution:{
 				type: Number,
 				value: 0.1,
 				notify: true,
 				observer: '_onResize'
+			},
+			zoom:{
+				type: Number,
+				value: 1,
+				notify: true
 			},
 			deformationFrequency:{
 				type: Number,
@@ -60,6 +65,11 @@
 			blobSize:{
 				type: Number,
 				value: 0.02,
+				notify: true
+			},
+			blobStickiness:{
+				type: Number,
+				value: 2.0,
 				notify: true
 			},
 			timeMultiplier:{
@@ -92,6 +102,33 @@
 				notify: true,
 				value: 1
 			},
+			movementConstrain: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			rigidPositionAmount: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			fluidPositionAmount: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			_normalizedRigidPositionAmount: {
+				type: Number,
+				value: 0.5
+			},
+			_normalizedFluidPositionAmount: {
+				type: Number,
+				value: 0.5
+			},
+			_randomTable: {
+				type: Array,
+				computed: '_computeRandomTable(numBalls)'
+			},
 			_fragmentShaderSource: {
 				type: String
 			}
@@ -100,7 +137,8 @@
 			'click' : 'screenshot'
 		},
 		observers:[
-			'_setupRederer(_fragmentShaderSource, numBalls)'
+			'_setupRederer(_fragmentShaderSource, numBalls)',
+			'_computePositionAmounts(fluidPositionAmount,rigidPositionAmount)'
 		],
 		ready: function () {
 			window.META = this;
@@ -134,6 +172,7 @@
 				baseLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				spotLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				blobStickiness  : { type: "f", value: this.blobStickiness },
 				deformationFrequency  : { type: "f", value: this.deformationFrequency },
 				deformationAmount : { type: "f", value: this.deformationAmount },
 				objects : { type : "v4v", value: objects },
@@ -142,7 +181,8 @@
 				halftonePrePower : { type: "f", value: this.halftonePrePower },
 				halftonePostPower : { type: "f", value: this.halftonePostPower },
 				halftoneMultiplier : { type: "f", value: this.halftoneMultiplier },
-				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -1) },
+				zoom: { type: "f", value: this.zoom },
+				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -1 ) },
 				texture: { type: "t", value: new THREE.Texture( ) },
 				cubemap: { type: "t", value: new THREE.Texture( ) }
 
@@ -176,20 +216,34 @@
 			window.addEventListener('resize', this._onResize.bind(this), false);
 			this._onResize();
 		},
-
+		_computeRandomTable:function(numBalls){
+			var table = [];
+			for (var i = 0; i < numBalls; i++) {
+				table[i] = Math.random();
+			}
+			return table;
+		},
 		_fluidPosition: function(value, i, array){
-			var now = this._now();
+			var now = this._now() * this._randomTable[i];
 			var index = i/array.length;
 			var result = {};
-			result.x = Math.sin(now*0.4 + index * 10);
-			result.y = Math.cos(now + index * now*0.3) * 0.3;
-			result.z = (Math.sin(now*0.7 + index * now*0.1) * 0.5 - 1.0) * 0.001;
+			result.x = Math.sin(now*0.4 + index * 10+ this._randomTable[i]) ;
+			result.y = Math.cos(now + index * now*0.3 + this._randomTable[i]) * 0.3;
+			result.z = (Math.sin(now*0.7 + index * now*0.1+ this._randomTable[i]) * 0.5 - 1.0) * 0.001;
 			//result.z = result.z * 0.2 -1;
 
 			return result;
 		},
-		_rigigPosition: function(value, i, array){
-			return Math.sin(Date.now() * 0.001) - 1;
+		_rigidPosition: function(value, i, array){
+			var size = Math.floor(Math.sqrt(array.length));
+			var row = (i % size) / size + 0.5/size;
+			var col =  Math.floor(i / size) / size;
+
+			var result = {};
+			result.x = (col - 0.5)*2.5;
+			result.y = (row - 0.5)*2;
+			result.z = 0;
+			return result;
 		},
 		_constrainPositionsToUv: function(value, i, array){
 			var result = {};
@@ -198,20 +252,35 @@
 			result.z = value.z;
 			return result;
 		},
+		_computePositionAmounts: function(fluidPositionAmount, rigidPositionAmount){
+			var all = fluidPositionAmount + rigidPositionAmount;
+			this._normalizedRigidPositionAmount = rigidPositionAmount / all;
+			this._normalizedFluidPositionAmount = fluidPositionAmount / all;
+		},
 		_render: function(dt) {
 
 			var objects = this._shader.uniforms.objects.value;
 			var fluidPositions = objects.map(this._fluidPosition.bind(this));
-			var finalPositions = fluidPositions.map(this._constrainPositionsToUv.bind(this));
+			var rigidPositions = objects.map(this._rigidPosition.bind(this));
+			var finalPositions = objects.map(function(value, i, array){
+				var fluidPosition = fluidPositions[i];
+				var rigidPosition = rigidPositions[i];
+				return {
+					x: (fluidPosition.x * this._normalizedFluidPositionAmount + rigidPosition.x * this._normalizedRigidPositionAmount) * this.movementConstrain,
+					y: (fluidPosition.y * this._normalizedFluidPositionAmount + rigidPosition.y * this._normalizedRigidPositionAmount) * this.movementConstrain,
+					z: (fluidPosition.z * this._normalizedFluidPositionAmount + rigidPosition.z * this._normalizedRigidPositionAmount) * this.movementConstrain
+				}
+			}.bind(this));
 
 			//var rigidPositions = objects.map(this._rigidPositions.bind(this));
 			objects.forEach(function(value, i){
-				value.x = fluidPositions[i].x;
-				value.y = fluidPositions[i].y;
-				value.z = fluidPositions[i].z;
-				value.w = this.blobSize;
+				value.x = finalPositions[i].x;
+				value.y = finalPositions[i].y;
+				value.z = finalPositions[i].z;
+				value.w = this._randomTable[i] * this.blobSize;
 			}.bind(this));
 
+			this._shader.uniforms.blobStickiness.value = this.blobStickiness;
 			this._shader.uniforms.deformationFrequency.value = this.deformationFrequency;
 			this._shader.uniforms.deformationAmount.value = this.deformationAmount;
 			this._shader.uniforms.halftoneGridSize.value = this.halftoneGridSize;
@@ -219,6 +288,7 @@
 			this._shader.uniforms.halftonePrePower.value = this.halftonePrePower;
 			this._shader.uniforms.halftonePostPower.value = this.halftonePostPower;
 			this._shader.uniforms.halftoneMultiplier.value = this.halftoneMultiplier;
+			this._shader.uniforms.zoom.value = this.zoom;
 
 			this._composer.render();
 		},
@@ -237,7 +307,6 @@
 
 				//this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
 				this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width, canvasSize.height) ;
-				console.log(canvasSize.width)
 
 			}, 100);
 		},

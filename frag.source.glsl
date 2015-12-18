@@ -1,5 +1,4 @@
 #define NUM_OBJECTS 20
-#define THRESHOLD 2.0
 #define NORMAL_EPSILON 0.001
 #define INTERVALS 15
 #define LIGHT_DIRECTION_1 vec3(0.0,2.0,0.0)
@@ -27,6 +26,7 @@ uniform vec3 backgroundColor;
 uniform vec3 baseLightColor;
 uniform vec3 spotLightColor;
 uniform vec3 spot2LightColor;
+uniform float blobStickiness;
 uniform float deformationFrequency;
 uniform float deformationAmount;
 uniform float halftoneGridSize;
@@ -34,6 +34,7 @@ uniform float halftoneSeparation;
 uniform float halftonePrePower;
 uniform float halftonePostPower;
 uniform float halftoneMultiplier;
+uniform float zoom;
 uniform vec3 camera;
 uniform vec4 objects [NUM_OBJECTS];
 
@@ -70,7 +71,7 @@ float distanceFunction ( vec3 point ){
 		distance += objects [i].w / f;
 	}
 
-	distance =  THRESHOLD - distance;
+	distance =  blobStickiness - distance;
 	distance = deformationRippleDisplacement(distance, point, vec3(deformationFrequency), vec3(deformationAmount));
 	return distance;
 }
@@ -229,8 +230,9 @@ vec3 ObjectMaterial ( RaytraceInfo info ){
 	}
 
 	color = mix(color, reflectionColor, REFLECTION_AMOUNT);
+	color = 3.0 * (color - vec3(0.5)) + vec3(0.5);
 
-	color += clamp( pow( abs(info.normal.x), 8.0) + pow(abs(info.normal.y), 8.0), 0.0, 0.2);
+	//color += clamp( pow( abs(info.normal.x), 8.0) + pow(abs(info.normal.y), 20.0), 0.0, 0.2);
 
 	return color;
 }
@@ -258,17 +260,35 @@ void main ( void ){
 	uv.x *= resolution.x / resolution.y;
 
 	// Pixelate
-	vec2 pixelateR = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(-0.08, -0.05)*halftoneSeparation) / halftoneGridSize;
-	vec2 pixelateG = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(0.0, 0.08)*halftoneSeparation) / halftoneGridSize;
-	vec2 pixelateB = floor(uv * halftoneGridSize) / halftoneGridSize + (vec2(0.08, -0.05)*halftoneSeparation) / halftoneGridSize;
-	float halftonePatternR = length(uv - (pixelateR + 0.5/halftoneGridSize)) * halftoneGridSize;
-	float halftonePatternG = length(uv - (pixelateG + 0.5/halftoneGridSize)) * halftoneGridSize;
-	float halftonePatternB = length(uv - (pixelateB + 0.5/halftoneGridSize)) * halftoneGridSize;
+	vec2 offset45deg = vec2(0.0);
+	if(mod(floor(uv.y * halftoneGridSize), 2.0) == 0.0){
+		offset45deg = vec2(0.5, 0);
+	}
+	vec2 base = uv * halftoneGridSize;
+	vec2 modBase = mod(base, 1.0);
+	if(modBase.x > offset45deg.x){
+		modBase = modBase - offset45deg;
+	}
+	else{
+		modBase = modBase + offset45deg;
+	}
+	base = base - modBase;
+
+	vec2 pixelateR = base / halftoneGridSize + (vec2(-0.08, -0.05)*halftoneSeparation + offset45deg) / halftoneGridSize;
+	vec2 pixelateG = base / halftoneGridSize + (vec2(0.0, 0.08)*halftoneSeparation + offset45deg) / halftoneGridSize;
+	vec2 pixelateB = base / halftoneGridSize + (vec2(0.08, -0.05)*halftoneSeparation+ offset45deg) / halftoneGridSize;
+
+
+	float halftonePatternR = length(uv - (pixelateR + 0.5/halftoneGridSize) + offset45deg /halftoneGridSize ) * halftoneGridSize;
+	float halftonePatternG = length(uv - (pixelateG + 0.5/halftoneGridSize)+ offset45deg /halftoneGridSize ) * halftoneGridSize;
+	float halftonePatternB = length(uv - (pixelateB + 0.5/halftoneGridSize)+ offset45deg /halftoneGridSize ) * halftoneGridSize;
 	vec3 halftonePattern = vec3(halftonePatternR, halftonePatternG, halftonePatternB);
+
 	uv = pixelateR;
 
+
 	// Raytrace
-	vec3 direction = vec3(uv, 1.0);
+	vec3 direction = vec3(uv, zoom);
 	Ray ray = Ray ( camera, direction );
 	RaytraceInfo info = Raytrace ( ray );
 
@@ -280,11 +300,15 @@ void main ( void ){
 
 	// Apply halftone
 	vec3 halftoneColor = color;
+
+	halftoneColor = max(halftoneColor, vec3(0.3));
 	halftoneColor *= halftonePattern;
+
 	halftoneColor = pow(halftoneColor, vec3(halftonePrePower));//1.2
 	halftoneColor *= vec3(halftoneMultiplier); //10
 	halftoneColor = clamp(halftoneColor, vec3(0.0), vec3(1.0));
 	halftoneColor = pow(halftoneColor, vec3(halftonePostPower));//3.0
+
 
 	// Mask
 	color = mix( halftoneColor, vec3(1.0), step(1.0, color));
