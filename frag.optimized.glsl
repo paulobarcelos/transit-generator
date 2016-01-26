@@ -94,6 +94,7 @@ void main ()
     bool tmpvar_29;
     bool tmpvar_30;
     tmpvar_30 = bool(0);
+
     highp float left_32;
     highp vec3 point_33;
     highp float time_34;
@@ -127,7 +128,8 @@ void main ()
      * deformationAmount)) + distance_39);
     distance_39 = tmpvar_41;
     left_32 = tmpvar_41;
-    for (int i_31 = 0; i_31 < 15; i_31++) {
+
+    for (highp int i_31 = 0; i_31 < 15; i_31++) {
       point_33 = (point_33 + (step_35 * tmpvar_27));
       highp vec3 point_42;
       point_42 = point_33;
@@ -388,10 +390,11 @@ void main ()
   highp vec3 tmpvar_89;
   tmpvar_89 = pow (clamp (halftoneColor_1, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0)), vec3(halftonePostPower));
   halftoneColor_1 = tmpvar_89;
+  color_2 = (mix (tmpvar_89, vec3(1.0, 1.0, 1.0), vec3(
+    greaterThanEqual (color_2, vec3(1.0, 1.0, 1.0))
+  )) + mix (gradientBottomColor, gradientTopColor, (gl_FragCoord.xy / resolution).yyy));
   highp vec3 tmpvar_90;
-  tmpvar_90 = mix (mix (gradientBottomColor, gradientTopColor, (gl_FragCoord.xy / resolution).yyy), vec3(1.0, 1.0, 1.0), vec3(greaterThanEqual (
-    mix (tmpvar_89, vec3(1.0, 1.0, 1.0), vec3(greaterThanEqual (color_2, vec3(1.0, 1.0, 1.0))))
-  , vec3(1.0, 1.0, 1.0))));
+  tmpvar_90 = min (color_2, vec3(1.0, 1.0, 1.0));
   color_2 = tmpvar_90;
   highp vec4 tmpvar_91;
   tmpvar_91.w = 1.0;
@@ -400,7 +403,7 @@ void main ()
 }
 
 
-// stats: 404 alu 0 tex 26 flow
+// stats: 403 alu 0 tex 26 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 // uniforms: 19 (total size: 0)

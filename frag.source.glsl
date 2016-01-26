@@ -317,7 +317,8 @@ void main ( void ){
 	vec3 gradientColor = mix(gradientBottomColor,gradientTopColor,vec3(gradientUv.y));
 
 	color = mix( halftoneColor, vec3(1.0), step(1.0, color));
-	color = mix( gradientColor, vec3(1.0), step(1.0, color));
+	color += gradientColor;
+	color = min( color, vec3(1.0));
 
 
 
