@@ -23,7 +23,7 @@
 
 		<iron-ajax
 			auto
-			url="[[resolveUrl('frag.source.glsl')]]"
+			url="[[resolveUrl('frag.optimized.glsl')]]"
 			handle-as="text"
 			last-response="{{_fragmentShaderSource}}">
 		</iron-ajax>
@@ -117,6 +117,36 @@
 				value: 1,
 				notify: true
 			},
+			gradientTopColorR: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorG: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorB: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientBottomColorR: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorG: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorB: {
+				type: Number,
+				value: 0.7,
+				notify: true
+			},
 			_normalizedRigidPositionAmount: {
 				type: Number,
 				value: 0.5
@@ -173,6 +203,8 @@
 				spotLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
 				blobStickiness  : { type: "f", value: this.blobStickiness },
+				gradientTopColor : { type: "v3", value: new THREE.Vector3( this.gradientTopColorR, this.gradientTopColorG, this.gradientTopColorB ) },
+				gradientBottomColor : { type: "v3", value: new THREE.Vector3( this.gradientBottomColorR, this.gradientBottomColorG, this.gradientBottomColorB ) },
 				deformationFrequency  : { type: "f", value: this.deformationFrequency },
 				deformationAmount : { type: "f", value: this.deformationAmount },
 				objects : { type : "v4v", value: objects },
@@ -288,6 +320,14 @@
 			this._shader.uniforms.halftonePrePower.value = this.halftonePrePower;
 			this._shader.uniforms.halftonePostPower.value = this.halftonePostPower;
 			this._shader.uniforms.halftoneMultiplier.value = this.halftoneMultiplier;
+
+			this._shader.uniforms.gradientTopColor.value.x = this.gradientTopColorR;
+			this._shader.uniforms.gradientTopColor.value.y = this.gradientTopColorG;
+			this._shader.uniforms.gradientTopColor.value.z = this.gradientTopColorB;
+			this._shader.uniforms.gradientBottomColor.value.x = this.gradientBottomColorR;
+			this._shader.uniforms.gradientBottomColor.value.y = this.gradientBottomColorG;
+			this._shader.uniforms.gradientBottomColor.value.z = this.gradientBottomColorB;
+
 			this._shader.uniforms.zoom.value = this.zoom;
 
 			this._composer.render();
