@@ -27,6 +27,8 @@ uniform vec3 baseLightColor;
 uniform vec3 spotLightColor;
 uniform vec3 spot2LightColor;
 uniform float blobStickiness;
+uniform vec3 gradientTopColor;
+uniform vec3 gradientBottomColor;
 uniform float deformationFrequency;
 uniform float deformationAmount;
 uniform float halftoneGridSize;
@@ -311,7 +313,14 @@ void main ( void ){
 
 
 	// Mask
+	vec2 gradientUv = (gl_FragCoord.xy  / resolution.xy );
+	vec3 gradientColor = mix(gradientBottomColor,gradientTopColor,vec3(gradientUv.y));
+
 	color = mix( halftoneColor, vec3(1.0), step(1.0, color));
+	color = mix( gradientColor, vec3(1.0), step(1.0, color));
+
+
+
 
 
 	gl_FragColor =  vec4(color,1.0 );

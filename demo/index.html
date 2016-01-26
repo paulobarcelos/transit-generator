@@ -66,7 +66,13 @@
 					halftone-multiplier="{{halftoneMultiplier}}"
 					movement-constrain="{{movementConstrain}}"
 					rigid-position-amount="{{rigidPositionAmount}}"
-					fluid-position-amount="{{fluidPositionAmount}}">
+					fluid-position-amount="{{fluidPositionAmount}}"
+					gradient-top-color-r="{{gradientTopColorR}}"
+					gradient-top-color-g="{{gradientTopColorG}}"
+					gradient-top-color-b="{{gradientTopColorB}}"
+					gradient-bottom-color-r="{{gradientBottomColorR}}"
+					gradient-bottom-color-g="{{gradientBottomColorG}}"
+					gradient-bottom-color-b="{{gradientBottomColorB}}">
 				</transit-generator>
 				<div drawer>
 					<paper-toggle-button
@@ -186,6 +192,56 @@
 						Filter
 					</paper-toggle-button>
 					<iron-collapse opened="[[uiFilterOpen]]">
+						<div>Color Top</div>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="1"
+							immediate-value="{{gradientTopColorR}}">
+						</paper-slider>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="1"
+							immediate-value="{{gradientTopColorG}}">
+						</paper-slider>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="1"
+							immediate-value="{{gradientTopColorB}}">
+						</paper-slider>
+						<div>Color Bottom</div>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="0"
+							immediate-value="{{gradientBottomColorR}}">
+						</paper-slider>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="0"
+							immediate-value="{{gradientBottomColorG}}">
+						</paper-slider>
+						<paper-slider
+							editable
+							min=0
+							max=1
+							step="0.0001"
+							value="0"
+							immediate-value="{{gradientBottomColorB}}">
+						</paper-slider>
 						<div>Halftone Grid</div>
 						<paper-slider
 							editable

@@ -14,6 +14,17 @@ Then, go ahead and download the element's dependencies:
 
     bower install
 
+## Optimizing shader
+In order to optmize the `frag.source.glsl` shader (so it runs smoothly on older machines) use the [GLSL Optimizer](https://github.com/aras-p/glsl-optimizer).
+It will generate the `frag.optmized.glsl` shader.
+
+There is a big change that your browser will comply it cannot compile the shader (due to the way the optimizer works, like optmizing for loops for example). If that happens check the errors on console and fix the errors manually (like adjusting the statements of the loops).
+
+```
+# Run from this directory
+sh optimize-shader.sh
+```
+
 
 ## Playing With Your Element
 
