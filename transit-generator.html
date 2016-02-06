@@ -347,12 +347,17 @@
 					height: (screenSize.height * resolution )
 				}
 
-				this._renderer.setSize(canvasSize.width, canvasSize.height);
-				var scale = (1.0 / resolution) ;
-				this.transform('scale3d('+scale+', '+scale+', 1.0)', this._renderer.domElement);
+				if(this._renderer){
+					this._renderer.setSize(canvasSize.width, canvasSize.height);
 
-				//this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
-				this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width, canvasSize.height) ;
+					var scale = (1.0 / resolution) ;
+					this.transform('scale3d('+scale+', '+scale+', 1.0)', this._renderer.domElement);
+				}
+
+				if(this._shader){
+					//this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
+					this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width, canvasSize.height) ;
+				}
 
 			}, 100);
 		},
