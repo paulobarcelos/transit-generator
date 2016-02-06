@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+		<title>transit-generator Demo</title>
+		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+		<link rel="import" href="../transit-background.html">
+
+		<style>
+			html, body{
+				min-width: 100%;
+				min-height: 100%;
+			}
+			transit-background{
+				position: fixed;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+				width: 100%;
+				height: 100%;
+			}
+
+		</style>
+	</head>
+
+	<body>
+		<!--
+			Avaiable states are:
+			- zero
+			- condensed
+			- spread
+			- vaporize
+			- interact
+			- organic
+			- contact
+			- news
+
+			Gradient colors are set in the range 0 - 1
+		-->
+		<transit-background
+			state="zero"
+
+			gradient-top-color-r="1.0"
+			gradient-top-color-g="1.0"
+			gradient-top-color-b="1.0"
+
+			gradient-bottom-color-r="1.0"
+			gradient-bottom-color-g="0.6"
+			gradient-bottom-color-b="0.6">
+		</transit-background>
+	</body>
+</html>

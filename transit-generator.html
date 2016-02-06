@@ -174,6 +174,9 @@
 			window.META = this;
 		},
 		_setupRederer: function () {
+			if(!Detector.webgl){
+				return;
+			}
 			if(typeof this._fragmentShaderSource === 'undefined'){
 				return;
 			}
@@ -333,6 +336,9 @@
 			this._composer.render();
 		},
 		_onResize:function(){
+			if(!Detector.webgl){
+				return;
+			}
 			this.debounce('_onResize', function(){
 				var screenSize = this.getBoundingClientRect();
 				var resolution = Math.sqrt( (this.maxResolution * 1000000) / (screenSize.width * screenSize.height) );
