@@ -14,6 +14,7 @@
 				min-height: 100%;
 			}
 			transit-background{
+				display: none;
 				position: fixed;
 				top: 0;
 				left: 0;
@@ -21,12 +22,14 @@
 				right: 0;
 				width: 100%;
 				height: 100%;
+				z-index: -100;
 			}
 
 		</style>
 	</head>
 
 	<body>
+		<h1>Transit<h1>
 		<!--
 			Avaiable states are:
 			- zero
@@ -41,6 +44,7 @@
 			Gradient colors are set in the range 0 - 1
 		-->
 		<transit-background
+			id="transit-background"
 			state="zero"
 
 			gradient-top-color-r="1.0"
@@ -51,5 +55,16 @@
 			gradient-bottom-color-g="0.6"
 			gradient-bottom-color-b="0.6">
 		</transit-background>
+
+		<script>
+			setTimeout(function () {
+				var bg = document.getElementById('transit-background');
+				bg.style.display = 'block';
+				bg.render();
+			}, 1000)
+
+		</script>
+
+
 	</body>
 </html>
