@@ -17,20 +17,52 @@
 		<link rel="import" href="../transit-generator-states.html">
 
 		<style>
-			body{
+			*{
+				box-sizing: border-box;
+			}
+			html,body{
 				font-family: 'Roboto', 'Noto', sans-serif;
+				width: 100%;
+				height: 100%;
+				max-width: 100%;
+				max-height: 100%;
+				position: absolute;
+				top:0;
+				left:0;
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
+			}
+			#panel{
+				position: absolute;
+				top:0;
+				left:0;
+				width: 100%;
+				height: 100%;
+			}
+			#drawer{
+				position: absolute;
+				top: 0;
+				left: 0;
+				height: 100%;
+				overflow-y: scroll;
+				background-color: #eee;
+				padding: 1rem;
+				overflow-y: scroll;
+				width: 256px;
 			}
 			transit-generator{
 				position: absolute;
 				top: 0;
-				left: 0;
+				left: 256px;
 				bottom: 0;
 				right: 0;
 			}
-			[drawer]{
-				background-color: #eee;
-				padding: 1rem;
-				overflow-y: scroll;
+			.hide #drawer{
+				display: none;
+			}
+			.hide transit-generator{
+				left: 0;
 			}
 			paper-button{
 				display: block;
@@ -67,7 +99,7 @@
 				rigid-position-amount="{{rigidPositionAmount}}"
 				fluid-position-amount="{{fluidPositionAmount}}">
 			</transit-generator-states>
-			<paper-drawer-panel>
+			<div id=panel>
 
 				<transit-generator
 					id="generator"
@@ -95,8 +127,8 @@
 					gradient-bottom-color-g="[[gradientBottomColorG]]"
 					gradient-bottom-color-b="[[gradientBottomColorB]]">
 				</transit-generator>
-				<div drawer>
-
+				<div id=drawer>
+					<pre>Press "M" to show/hide menu.</pre>
 					<div>Resolution (MP)</div>
 					<paper-slider
 						editable
@@ -189,7 +221,7 @@
 						on-tap="_onScreenshotTap">Screenshot</paper-button>
 				</div>
 
-			</paper-drawer-panel>
+			</div>
 		</template>
 		<script>
 			var template = document.querySelector('#template');
@@ -221,6 +253,19 @@
 			template._onScreenshotTap = function(e) {
 				var dataURL = template.$.generator.takeScreenshot();
 				window.open(dataURL,'_blank');
+			};
+
+			var show = true;
+			document.onkeyup = function (e) {
+				if(show){
+					document.body.classList.add('hide');
+				}
+				else{
+					console.log('aa')
+					document.body.classList.remove('hide');
+				}
+				template.$.generator._onResize();
+				show = !show;
 			};
 		</script>
 
