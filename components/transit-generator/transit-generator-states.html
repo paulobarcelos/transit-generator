@@ -1,0 +1,226 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<dom-module id="transit-generator-states">
+</dom-module>
+
+<script>
+	Polymer({
+		is: 'transit-generator-states',
+		properties: {
+			lerp: {
+				type: Number,
+				value: 0.5
+			},
+			state: {
+				type: String,
+				value: 'zero',
+				notify: true
+			},
+			blobStickiness:{
+				type: Number,
+				notify: true
+			},
+			movementConstrain:{
+				type: Number,
+				notify: true
+			},
+			zoom:{
+				type: Number,
+				notify: true
+			},
+			deformationFrequency:{
+				type: Number,
+				notify: true
+			},
+			deformationAmount:{
+				type: Number,
+				notify: true
+			},
+			blobSize:{
+				type: Number,
+				notify: true
+			},
+			timeMultiplier:{
+				type: Number,
+				notify: true
+			},
+			halftoneGridSize : {
+				type: Number,
+				notify: true
+			},
+			halftoneSeparation : {
+				type: Number,
+				notify: true
+			},
+			halftonePrePower : {
+				type: Number,
+				notify: true
+			},
+			halftonePostPower : {
+				type: Number,
+				notify: true
+			},
+			halftoneMultiplier : {
+				type: Number,
+				notify: true
+			},
+			rigidPositionAmount: {
+				type: Number,
+				notify: true
+			},
+			fluidPositionAmount: {
+				type: Number,
+				notify: true
+			}
+		},
+		ready: function () {
+			this._values = {};
+			this._values.zero = {
+				blobStickiness: 20,
+				deformationFrequency: 1,
+				deformationAmount: 0,
+				blobSize: 0.3,
+				zoom: 1.6,
+				movementConstrain: 0,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.5,
+				rigidPositionAmount: 0.5,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+
+			}
+			this._values.condensed = {
+				blobStickiness: 20,
+				deformationFrequency: 1,
+				deformationAmount: 0,
+				blobSize: 0.3,
+				zoom: 1.6,
+				movementConstrain: 0.578,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.5,
+				rigidPositionAmount: 0.11,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.spread = {
+				blobStickiness: 20,
+				deformationFrequency: 1,
+				deformationAmount: 0,
+				blobSize: 0.3,
+				zoom: 1.6,
+				movementConstrain: 1,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.5,
+				rigidPositionAmount: 0.5,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.vaporize = {
+				blobStickiness: 20,
+				deformationFrequency: 1,
+				deformationAmount: 0,
+				blobSize: 0.3,
+				zoom: 4.4375,
+				movementConstrain: 0.3984,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.5,
+				rigidPositionAmount: 0.5,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 0.8115,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.interact = {
+				blobStickiness: 20,
+				deformationFrequency: 40,
+				deformationAmount: 0.2,
+				blobSize: 0.164,
+				zoom: 2.0313,
+				movementConstrain: 0.7421,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.195,
+				rigidPositionAmount: 0.74,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.organic = {
+				blobStickiness: 20,
+				deformationFrequency: 21,
+				deformationAmount: 1.5,
+				blobSize: 0.140,
+				zoom: 3.1251,
+				movementConstrain: 0.4762,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.195,
+				rigidPositionAmount: 0,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.news = {
+				blobStickiness: 20,
+				deformationFrequency: 40,
+				deformationAmount: 0.3,
+				blobSize: 0.1,
+				zoom: 1.8,
+				movementConstrain: 0.66,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.55,
+				rigidPositionAmount: 1 ,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			this._values.contact = {
+				blobStickiness: 20,
+				deformationFrequency: 40,
+				deformationAmount: 0.3,
+				blobSize: 0.39,
+				zoom: 1.5,
+				movementConstrain: 0.7,
+				timeMultiplier: 0.8,
+				fluidPositionAmount: 0.5,
+				rigidPositionAmount: 0.195 ,
+				halftoneGridSize: 30,
+				halftoneSeparation: 0,
+				halftonePrePower: 1.3583,
+				halftonePostPower: 5.0,
+				halftoneMultiplier: 15.7813
+			}
+			var first = this._values.zero;
+			Object.keys(first).forEach(function(key) {
+				this.set(key, first[key]);
+			}.bind(this));
+
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+		},
+		_animationFrame: function () {
+			var lerp = this.lerp;
+			var oLerp = 1 - lerp;
+			if(this._values[this.state]){
+				Object.keys(this._values[this.state]).forEach(function(key) {
+					var value = this[key] * oLerp + this._values[this.state][key] * lerp;
+					this.set(key, value);
+				}.bind(this));
+			}
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+		},
+	});
+</script>

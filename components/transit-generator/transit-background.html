@@ -1,0 +1,121 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../transit-generator/transit-generator.html">
+<link rel="import" href="../transit-generator/transit-generator-states.html">
+
+<dom-module id="transit-background">
+	<template>
+		<style>
+			:host{
+				display: block;
+				width: 300px;
+				height: 300px;
+			}
+			transit-generator{
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+			}
+
+		</style>
+
+		<transit-generator-states
+			state="[[state]]"
+			lerp="0.015"
+			zoom="{{zoom}}"
+			blob-stickiness="{{blobStickiness}}"
+			time-multiplier="{{timeMultiplier}}"
+			deformation-frequency="{{deformationFrequency}}"
+			deformation-amount="{{deformationAmount}}"
+			blob-size="{{blobSize}}"
+			halftone-Grid-Size="{{halftoneGridSize}}"
+			halftone-separation="{{halftoneSeparation}}"
+			halftone-pre-power="{{halftonePrePower}}"
+			halftone-post-power="{{halftonePostPower}}"
+			halftone-multiplier="{{halftoneMultiplier}}"
+			movement-constrain="{{movementConstrain}}"
+			rigid-position-amount="{{rigidPositionAmount}}"
+			fluid-position-amount="{{fluidPositionAmount}}">
+		</transit-generator-states>
+
+		<transit-generator
+			id="generator"
+			main
+			zoom="[[zoom]]"
+			blob-stickiness="[[blobStickiness]]"
+			time-multiplier="[[timeMultiplier]]"
+			max-resolution="[[resolution]]"
+			deformation-frequency="[[deformationFrequency]]"
+			deformation-amount="[[deformationAmount]]"
+			blob-size="[[blobSize]]"
+			halftone-Grid-Size="[[halftoneGridSize]]"
+			halftone-separation="[[halftoneSeparation]]"
+			halftone-pre-power="[[halftonePrePower]]"
+			halftone-post-power="[[halftonePostPower]]"
+			halftone-multiplier="[[halftoneMultiplier]]"
+			movement-constrain="[[movementConstrain]]"
+			rigid-position-amount="[[rigidPositionAmount]]"
+			fluid-position-amount="[[fluidPositionAmount]]"
+
+			gradient-top-color-r="[[gradientTopColorR]]"
+			gradient-top-color-g="[[gradientTopColorG]]"
+			gradient-top-color-b="[[gradientTopColorB]]"
+			gradient-bottom-color-r="[[gradientBottomColorR]]"
+			gradient-bottom-color-g="[[gradientBottomColorG]]"
+			gradient-bottom-color-b="[[gradientBottomColorB]]">
+		</transit-generator>
+
+	</template>
+</dom-module>
+
+<script>
+	Polymer({
+		is: 'transit-background',
+		properties: {
+			state: {
+				type: String,
+				value: 'zero',
+				notify: true
+			},
+			resolution: {
+				type: Number,
+				value: 0.4,
+				notify: true
+			},
+			gradientTopColorR: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorG: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorB: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientBottomColorR: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorG: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorB: {
+				type: Number,
+				value: 0.7,
+				notify: true
+			}
+		},
+		render: function(){
+			this.$.generator._onResize();
+		}
+	});
+</script>

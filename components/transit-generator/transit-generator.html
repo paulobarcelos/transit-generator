@@ -1,0 +1,381 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="threejs-imports.html">
+
+<dom-module id="transit-generator">
+	<template>
+		<style>
+			:host{
+				display: block;
+				position: relative;
+			}
+			#renderer{
+				@apply(--layout-fit);
+				overflow: hidden;
+			}
+			#renderer canvas{
+				transform-origin: 0 0 0;
+				-webkit-transform-origin : 0 0 0;
+			}
+
+		</style>
+
+		<iron-ajax
+			auto
+			url="frag.optimized.glsl"
+			handle-as="text"
+			last-response="{{_fragmentShaderSource}}">
+		</iron-ajax>
+
+		<div id="renderer"></div>
+
+	</template>
+</dom-module>
+
+<script>
+	Polymer({
+		is: 'transit-generator',
+		properties: {
+			numBalls:{
+				type: Number,
+				value: 16
+			},
+			maxResolution:{
+				type: Number,
+				value: 0.1,
+				notify: true,
+				observer: '_onResize'
+			},
+			zoom:{
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			deformationFrequency:{
+				type: Number,
+				value: 40,
+				notify: true
+			},
+			deformationAmount:{
+				type: Number,
+				value: 0.6,
+				notify: true
+			},
+			blobSize:{
+				type: Number,
+				value: 0.02,
+				notify: true
+			},
+			blobStickiness:{
+				type: Number,
+				value: 2.0,
+				notify: true
+			},
+			timeMultiplier:{
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			halftoneGridSize : {
+				type: Number,
+				notify: true,
+				value: 20
+			},
+			halftoneSeparation : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftonePrePower : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftonePostPower : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			halftoneMultiplier : {
+				type: Number,
+				notify: true,
+				value: 1
+			},
+			movementConstrain: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			rigidPositionAmount: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			fluidPositionAmount: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorR: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorG: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientTopColorB: {
+				type: Number,
+				value: 1,
+				notify: true
+			},
+			gradientBottomColorR: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorG: {
+				type: Number,
+				value: 0,
+				notify: true
+			},
+			gradientBottomColorB: {
+				type: Number,
+				value: 0.7,
+				notify: true
+			},
+			_normalizedRigidPositionAmount: {
+				type: Number,
+				value: 0.5
+			},
+			_normalizedFluidPositionAmount: {
+				type: Number,
+				value: 0.5
+			},
+			_randomTable: {
+				type: Array,
+				computed: '_computeRandomTable(numBalls)'
+			},
+			_fragmentShaderSource: {
+				type: String
+			}
+		},
+		listeners:{
+			'click' : 'screenshot'
+		},
+		observers:[
+			'_setupRederer(_fragmentShaderSource, numBalls)',
+			'_computePositionAmounts(fluidPositionAmount,rigidPositionAmount)'
+		],
+		ready: function () {
+			window.META = this;
+		},
+		_setupRederer: function () {
+			if(!Detector.webgl){
+				return;
+			}
+			if(typeof this._fragmentShaderSource === 'undefined'){
+				return;
+			}
+			if(typeof this.numBalls === 'undefined'){
+				return;
+			}
+			this._renderer = new THREE.WebGLRenderer({
+				precision: 'lowp'
+			});
+			renderer.autoClear = false;
+
+			while(Polymer.dom(this.$.renderer).lastChild){
+				Polymer.dom(this.$.renderer).removeChild(Polymer.dom(this.$.renderer).lastChild);
+			}
+			Polymer.dom(this.$.renderer).appendChild(this._renderer.domElement);
+
+			var objects = [];
+			for (var i = 0; i < this.numBalls; i++) {
+				objects[i] = new THREE.Vector4(0,0,0, this.blobSize);
+			}
+			this._uniforms = {
+				time : { type: "f", value: 0 },
+				resolution : { type: "v2", value: new THREE.Vector2( 0.5, 0.5) },
+				objectColor : { type: "v3", value: new THREE.Vector3( 0, 0, 0 ) },
+				backgroundColor : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) },
+				baseLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				spotLightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				spot2LightColor : { type: "v3", value: new THREE.Vector3( 1.0, 1.0, 1.0 ) },
+				blobStickiness  : { type: "f", value: this.blobStickiness },
+				gradientTopColor : { type: "v3", value: new THREE.Vector3( this.gradientTopColorR, this.gradientTopColorG, this.gradientTopColorB ) },
+				gradientBottomColor : { type: "v3", value: new THREE.Vector3( this.gradientBottomColorR, this.gradientBottomColorG, this.gradientBottomColorB ) },
+				deformationFrequency  : { type: "f", value: this.deformationFrequency },
+				deformationAmount : { type: "f", value: this.deformationAmount },
+				objects : { type : "v4v", value: objects },
+				halftoneGridSize : { type: "f", value: this.halftoneGridSize },
+				halftoneSeparation : { type: "f", value: this.halftoneSeparation },
+				halftonePrePower : { type: "f", value: this.halftonePrePower },
+				halftonePostPower : { type: "f", value: this.halftonePostPower },
+				halftoneMultiplier : { type: "f", value: this.halftoneMultiplier },
+				zoom: { type: "f", value: this.zoom },
+				camera: { type: "v3", value: new THREE.Vector3( 0, 0, -1 ) },
+				texture: { type: "t", value: new THREE.Texture( ) },
+				cubemap: { type: "t", value: new THREE.Texture( ) }
+
+			}
+
+			this._composer = new THREE.EffectComposer( this._renderer );
+			this._shader = new THREE.ShaderPass( {
+				vertexShader : 'void main(){gl_Position = vec4( position, 1.0 );}',
+				fragmentShader : this._fragmentShaderSource,
+				uniforms: this._uniforms
+			});
+			this._shader.renderToScreen = true;
+			this._composer.addPass( this._shader );
+
+			/*this._filterShader = new THREE.ShaderPass( THREE.CopyShader );
+			this._filterShader.renderToScreen = true;
+			this._composer.addPass( this._filterShader );*/
+
+			/*this._dotScreenShader = new THREE.ShaderPass( THREE.DotScreenShader );
+			this._dotScreenShader .uniforms[ 'scale' ].value = 4;
+			this._composer.addPass( this._dotScreenShader  );
+
+			this._rGBShiftShader  = new THREE.ShaderPass( THREE.RGBShiftShader );
+			this._rGBShiftShader .uniforms[ 'amount' ].value = 0.0015;
+			this._rGBShiftShader .renderToScreen = true;
+			this._composer.addPass( this._rGBShiftShader  );*/
+
+			this._lastAnimationFrameTime = Date.now();
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+
+			window.addEventListener('resize', this._onResize.bind(this), false);
+			this._onResize();
+		},
+		_computeRandomTable:function(numBalls){
+			var table = [];
+			for (var i = 0; i < numBalls; i++) {
+				table[i] = Math.random();
+			}
+			return table;
+		},
+		_fluidPosition: function(value, i, array){
+			var now = this._now() * this._randomTable[i];
+			var index = i/array.length;
+			var result = {};
+			result.x = Math.sin(now*0.4 + index * 10+ this._randomTable[i]) ;
+			result.y = Math.cos(now + index * now*0.3 + this._randomTable[i]) * 0.3;
+			result.z = (Math.sin(now*0.7 + index * now*0.1+ this._randomTable[i]) * 0.5 - 1.0) * 0.001;
+			//result.z = result.z * 0.2 -1;
+
+			return result;
+		},
+		_rigidPosition: function(value, i, array){
+			var size = Math.floor(Math.sqrt(array.length));
+			var row = (i % size) / size + 0.5/size;
+			var col =  Math.floor(i / size) / size;
+
+			var result = {};
+			result.x = (col - 0.5)*2.5;
+			result.y = (row - 0.5)*2;
+			result.z = 0;
+			return result;
+		},
+		_constrainPositionsToUv: function(value, i, array){
+			var result = {};
+			result.x = (value.x * 0.5 - 0.5);
+			result.y = (value.y * 0.5 - 0.5);
+			result.z = value.z;
+			return result;
+		},
+		_computePositionAmounts: function(fluidPositionAmount, rigidPositionAmount){
+			var all = fluidPositionAmount + rigidPositionAmount;
+			this._normalizedRigidPositionAmount = rigidPositionAmount / all;
+			this._normalizedFluidPositionAmount = fluidPositionAmount / all;
+		},
+		_render: function(dt) {
+
+			var objects = this._shader.uniforms.objects.value;
+			var fluidPositions = objects.map(this._fluidPosition.bind(this));
+			var rigidPositions = objects.map(this._rigidPosition.bind(this));
+			var finalPositions = objects.map(function(value, i, array){
+				var fluidPosition = fluidPositions[i];
+				var rigidPosition = rigidPositions[i];
+				return {
+					x: (fluidPosition.x * this._normalizedFluidPositionAmount + rigidPosition.x * this._normalizedRigidPositionAmount) * this.movementConstrain,
+					y: (fluidPosition.y * this._normalizedFluidPositionAmount + rigidPosition.y * this._normalizedRigidPositionAmount) * this.movementConstrain,
+					z: (fluidPosition.z * this._normalizedFluidPositionAmount + rigidPosition.z * this._normalizedRigidPositionAmount) * this.movementConstrain
+				}
+			}.bind(this));
+
+			//var rigidPositions = objects.map(this._rigidPositions.bind(this));
+			objects.forEach(function(value, i){
+				value.x = finalPositions[i].x;
+				value.y = finalPositions[i].y;
+				value.z = finalPositions[i].z;
+				value.w = this._randomTable[i] * this.blobSize;
+			}.bind(this));
+
+			this._shader.uniforms.blobStickiness.value = this.blobStickiness;
+			this._shader.uniforms.deformationFrequency.value = this.deformationFrequency;
+			this._shader.uniforms.deformationAmount.value = this.deformationAmount;
+			this._shader.uniforms.halftoneGridSize.value = this.halftoneGridSize;
+			this._shader.uniforms.halftoneSeparation.value = this.halftoneSeparation;
+			this._shader.uniforms.halftonePrePower.value = this.halftonePrePower;
+			this._shader.uniforms.halftonePostPower.value = this.halftonePostPower;
+			this._shader.uniforms.halftoneMultiplier.value = this.halftoneMultiplier;
+
+			this._shader.uniforms.gradientTopColor.value.x = this.gradientTopColorR;
+			this._shader.uniforms.gradientTopColor.value.y = this.gradientTopColorG;
+			this._shader.uniforms.gradientTopColor.value.z = this.gradientTopColorB;
+			this._shader.uniforms.gradientBottomColor.value.x = this.gradientBottomColorR;
+			this._shader.uniforms.gradientBottomColor.value.y = this.gradientBottomColorG;
+			this._shader.uniforms.gradientBottomColor.value.z = this.gradientBottomColorB;
+
+			this._shader.uniforms.zoom.value = this.zoom;
+
+			this._composer.render();
+		},
+		_onResize:function(){
+			if(!Detector.webgl){
+				return;
+			}
+			this.debounce('_onResize', function(){
+				var screenSize = this.getBoundingClientRect();
+				var resolution = Math.sqrt( (this.maxResolution * 1000000) / (screenSize.width * screenSize.height) );
+				var canvasSize = {
+					width: (screenSize.width * resolution ),
+					height: (screenSize.height * resolution )
+				}
+
+				if(this._renderer){
+					this._renderer.setSize(canvasSize.width, canvasSize.height);
+
+					var scale = (1.0 / resolution) ;
+					this.transform('scale3d('+scale+', '+scale+', 1.0)', this._renderer.domElement);
+				}
+
+				if(this._shader){
+					//this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width * window.devicePixelRatio, canvasSize.height * window.devicePixelRatio) ;
+					this._shader.uniforms[ 'resolution' ].value = new THREE.Vector2( canvasSize.width, canvasSize.height) ;
+				}
+
+			}, 100);
+		},
+		_animationFrame: function () {
+			var dt = Date.now() - this._lastAnimationFrameTime;
+			this._lastAnimationFrameTime = Date.now();
+			this._render(dt);
+			window.requestAnimationFrame(this._animationFrame.bind(this));
+		},
+		_now: function(){
+			return Date.now() * 0.001 * this.timeMultiplier;
+		},
+		_constrainZ: function(z){
+			return z * 0.005 + 0.001;
+		},
+		takeScreenshot: function(){
+			this._composer.render();
+			return this._renderer.domElement.toDataURL();
+		}
+	});
+</script>
