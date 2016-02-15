@@ -257,6 +257,7 @@
 
 			var show = true;
 			document.onkeyup = function (e) {
+				if(e.keyCode != 77) return;
 				if(show){
 					document.body.classList.add('hide');
 				}
